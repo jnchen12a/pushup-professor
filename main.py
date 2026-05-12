@@ -1,9 +1,10 @@
 import numpy as np
 import cv2 as cv
 from ultralytics import YOLO
-from pose_utils import combineLeftRight
+from pose_utils import combineLeftRight, calcAngle
+import math
 
-# next: get angles between things using arctan2
+# next: count reps
 
 def useWebcam():
     cap = cv.VideoCapture(0)
@@ -50,13 +51,12 @@ def testModelOneFrame():
         for p in points:
             cv.circle(img, (p[0], p[1]), 5, (0, 0, 255), -1)
 
+        print(calcAngle(points[1], points[2]))
+
         cv.imshow('frame', img)
         cv.waitKey(0)
 
     cv.destroyAllWindows()
-
-
-
 
 
 if __name__ == '__main__':
