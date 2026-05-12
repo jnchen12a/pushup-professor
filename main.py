@@ -1,10 +1,10 @@
 import numpy as np
 import cv2 as cv
 from ultralytics import YOLO
-from pose_utils import combineLeftRight, calcAngle
+from pose_utils import combineLeftRight, calcAngle, writeAnglesToScreen
 import math
 
-# next: count reps
+# next: get degrees on screen count reps
 
 def useWebcam():
     cap = cv.VideoCapture(0)
@@ -50,8 +50,8 @@ def testModelOneFrame():
         img = result.orig_img
         for p in points:
             cv.circle(img, (p[0], p[1]), 5, (0, 0, 255), -1)
-
-        print(calcAngle(points[1], points[2]))
+        
+        img = writeAnglesToScreen(img, points)
 
         cv.imshow('frame', img)
         cv.waitKey(0)

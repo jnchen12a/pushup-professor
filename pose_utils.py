@@ -1,4 +1,5 @@
 import math
+import cv2 as cv
 
 def combineLeftRight(l: list) -> list:
     '''
@@ -30,3 +31,21 @@ def calcAngle(origin: tuple, point: tuple) -> float:
     x, y = point[0] - origin[0], -(point[1] - origin[1])
 
     return math.degrees(math.atan2(y, x))
+
+def writeAnglesToScreen(img: cv.typing.MatLike, points: list) -> cv.typing.MatLike:
+    pairs = {
+        "sh to el": (0, 1),
+        "el to wr": (1, 2),
+        "sh to hip": (0, 3),
+        "hip to kn": (3, 4),
+        "kn to ank": (4, 5)
+    }
+    yCoord = 0
+    for name, p in pairs.items():
+        t = f'{name}: {calcAngle(points[p[0]], points[p[1]]):.2f}'
+        info = cv.getTextSize(t, cv.FONT_HERSHEY_SIMPLEX, 1.5, 2)
+        yOffset = info[0][1]
+        yCoord += yOffset + 5
+        cv.putText(img, t, (0, yCoord), cv.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 255), 2)
+
+    return img
