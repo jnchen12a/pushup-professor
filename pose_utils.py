@@ -3,6 +3,7 @@ import cv2 as cv
 
 def combineLeftRight(l: list) -> list:
     '''
+    Combines left- and right-side body parts into one point\n
     0: shoulder
     1: elbow
     2: wrist
@@ -12,6 +13,9 @@ def combineLeftRight(l: list) -> list:
 
     returns: [ [int, int] ]
     '''
+    if len(l) == 0:
+        # there are no points of interest detected
+        return [ [0, 0] for i in range(6)]
     ret = []
     pairs = [[5, 6], [7, 8], [9, 10], [11, 12], [13, 14], [15, 16]]
     for pair in pairs:
@@ -28,11 +32,15 @@ def calcAngle(origin: tuple, point: tuple) -> float:
     Treats positive x-axis as 0 degrees.
     '''
     # need to negate y because of cv coordinate system, has (0, 0) in top left corner
+    # returns 0 if both points are (0, 0) (possibly due to the fact that no points of interest were found)
     x, y = point[0] - origin[0], -(point[1] - origin[1])
 
     return math.degrees(math.atan2(y, x))
 
 def writeAnglesToScreen(img: cv.typing.MatLike, points: list) -> cv.typing.MatLike:
+    '''
+    Writes angles between selected body parts to screen, for debugging.
+    '''
     pairs = {
         "sh to el": (0, 1),
         "el to wr": (1, 2),
