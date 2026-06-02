@@ -1,15 +1,18 @@
 import numpy as np
 import cv2 as cv
 from ultralytics import YOLO
-from pose_utils import combineLeftRight, calcAngle, writeAnglesToScreen
+from pose_utils import combineLeftRight, writeAnglesToScreen, calcAngles
+from rep_counter import checkStartRep, checkEndRep, writeRepsToScreen
 import math, time
 
-# next: test live camera angles, get degrees on screen count reps
+# next: redo count reps logic, get reps on screen
 
 def testModel():
-    model = YOLO("yolov8n-pose.pt")
-    results = model(source=0, stream=True)
+    model = YOLO("yolov8n-pose.pt", verbose=False)
+    results = model(source="./normal.MOV", stream=True, verbose=False)
 
+    inMiddleOfRep = False
+    numReps = 0
     for result in results:
         xy = result.keypoints.xy
         points = combineLeftRight(xy)
@@ -19,7 +22,20 @@ def testModel():
         for p in points:
             cv.circle(img, (p[0], p[1]), 5, (0, 0, 255), -1)
         
-        img = writeAnglesToScreen(img, points)
+        angles = calcAngles(points)
+        
+        if not inMiddleOfRep:
+            if checkStartRep(angles):
+                inMiddleOfRep = True
+                print('rep started')
+        else:
+            if checkEndRep(angles):
+                inMiddleOfRep = False
+                numReps += 1
+                print('rep ended')
+
+        img = writeAnglesToScreen(img, angles)
+        img = writeRepsToScreen(img, numReps)
 
         cv.imshow('frame', img)
         if cv.waitKey(1) == ord("q"):
@@ -27,7 +43,7 @@ def testModel():
 
     cv.destroyAllWindows()
 
-def debugging():
+def debuggingSave():
     model = YOLO("yolov8n-pose.pt", verbose=False)
 
     results = model(source=0, stream=True, verbose=False)
@@ -67,5 +83,5 @@ def debugging():
 
 
 if __name__ == '__main__':
-    # testModel()
-    debugging()
+    testModel()
+    # debuggingSave()

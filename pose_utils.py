@@ -26,7 +26,7 @@ def combineLeftRight(l: list) -> list:
 
     return ret
 
-def calcAngle(origin: tuple, point: tuple) -> float:
+def _calcAngle(origin: tuple, point: tuple) -> float:
     '''
     Calculates angle between origin and point, returns angle in degrees.
     Treats positive x-axis as 0 degrees.
@@ -37,20 +37,32 @@ def calcAngle(origin: tuple, point: tuple) -> float:
 
     return math.degrees(math.atan2(y, x))
 
-def writeAnglesToScreen(img: cv.typing.MatLike, points: list) -> cv.typing.MatLike:
+def calcAngles(points: list) -> list:
+    '''
+    Calculates the angle between a list of 2D points.
+    Returns a list of angles, respectively
+    Input should be [ [x, y], [x, y] ]
+    '''
+    ret = []
+    for i in range(1, len(points)):
+        ret.append(_calcAngle(points[i - 1], points[i]))
+
+    return ret
+
+def writeAnglesToScreen(img: cv.typing.MatLike, angles: list) -> cv.typing.MatLike:
     '''
     Writes angles between selected body parts to screen, for debugging.
     '''
-    pairs = {
-        "sh to el": (0, 1),
-        "el to wr": (1, 2),
-        "sh to hip": (0, 3),
-        "hip to kn": (3, 4),
-        "kn to ank": (4, 5)
-    }
+    pairs = [
+        "sh to el",
+        "el to wr",
+        "sh to hip",
+        "hip to kn",
+        "kn to ank"
+    ]
     yCoord = 0
-    for name, p in pairs.items():
-        t = f'{name}: {calcAngle(points[p[0]], points[p[1]]):.2f}'
+    for i, name in enumerate(pairs):
+        t = f'{name}: {angles[i]:.2f}'
         info = cv.getTextSize(t, cv.FONT_HERSHEY_SIMPLEX, 1.5, 2)
         yOffset = info[0][1]
         yCoord += yOffset + 5
