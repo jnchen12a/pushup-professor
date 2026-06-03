@@ -49,6 +49,14 @@ def calcAngles(points: list) -> list:
 
     return ret
 
+def calcAngles2(points: list) -> list:
+    pairsOfInterest = [ [0, 3], [3, 4], [4, 5] ]
+    ret = []
+    for pair in pairsOfInterest:
+        ret.append(_calcAngle(points[pair[0]], points[pair[1]]))
+
+    return ret
+
 def writeAnglesToScreen(img: cv.typing.MatLike, angles: list) -> cv.typing.MatLike:
     '''
     Writes angles between selected body parts to screen, for debugging.
@@ -66,6 +74,22 @@ def writeAnglesToScreen(img: cv.typing.MatLike, angles: list) -> cv.typing.MatLi
         info = cv.getTextSize(t, cv.FONT_HERSHEY_SIMPLEX, 1.5, 2)
         yOffset = info[0][1]
         yCoord += yOffset + 5
-        cv.putText(img, t, (0, yCoord), cv.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 255), 2)
+        img = cv.putText(img, t, (0, yCoord), cv.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 255), 2)
+
+    return img
+
+def writeAnglesToScreen2(img: cv.typing.MatLike, angles: list) -> cv.typing.MatLike:
+    pairs = [
+        "sh to hip",
+        "hip to kn",
+        "kn to ank"
+    ]
+    yCoord = 0
+    for i, name in enumerate(pairs):
+        t = f'{name}: {angles[i]:.2f}'
+        info = cv.getTextSize(t, cv.FONT_HERSHEY_SIMPLEX, 1.5, 2)
+        yOffset = info[0][1]
+        yCoord += yOffset + 5
+        img = cv.putText(img, t, (0, yCoord), cv.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 255), 2)
 
     return img

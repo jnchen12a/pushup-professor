@@ -1,18 +1,23 @@
 import numpy as np
 import cv2 as cv
 from ultralytics import YOLO
-from pose_utils import combineLeftRight, writeAnglesToScreen, calcAngles
-from rep_counter import checkStartRep, checkEndRep, writeRepsToScreen
+from pose_utils import combineLeftRight, writeAnglesToScreen, calcAngles, writeAnglesToScreen2, calcAngles2
+from rep_counter import checkStartRep2, checkEndRep2, writeRepsToScreen
 import math, time
 
-# next: redo count reps logic, get reps on screen
+# next: get reps on screen (optimize this later)
 
-def testModel():
+def testModel(path = ''):
     model = YOLO("yolov8n-pose.pt", verbose=False)
-    results = model(source="./normal.MOV", stream=True, verbose=False)
+    if path == '':
+        results = model(source=0, stream=True, verbose=False)
+    else:
+        results = model(source=path, stream=True, verbose=False)
 
-    inMiddleOfRep = False
+    down = False
+    up = False
     numReps = 0
+    out = None
     for result in results:
         xy = result.keypoints.xy
         points = combineLeftRight(xy)
@@ -22,25 +27,38 @@ def testModel():
         for p in points:
             cv.circle(img, (p[0], p[1]), 5, (0, 0, 255), -1)
         
-        angles = calcAngles(points)
+        angles = calcAngles2(points)
+        if out is None:
+            h, w = img.shape[:2]
+            fourcc = cv.VideoWriter_fourcc(*"mp4v")
+            out = cv.VideoWriter("output.mp4", fourcc, 10, (w, h))
+            print("Writer opened:", out.isOpened())
         
-        if not inMiddleOfRep:
-            if checkStartRep(angles):
-                inMiddleOfRep = True
-                print('rep started')
-        else:
-            if checkEndRep(angles):
-                inMiddleOfRep = False
+        if not up and not down:
+            # start of rep
+            if checkStartRep2(angles):
+                down = True
+        elif down and not up:
+            # check at the bottom of rep
+            if checkEndRep2(angles):
+                down = False
+                up = True
+        elif up and not down:
+            if checkStartRep2(angles):
+                up = False
+                down = False
                 numReps += 1
-                print('rep ended')
+        
 
-        img = writeAnglesToScreen(img, angles)
         img = writeRepsToScreen(img, numReps)
+        # img = writeAnglesToScreen2(img, angles)
 
+        out.write(img)
         cv.imshow('frame', img)
         if cv.waitKey(1) == ord("q"):
             break
 
+    out.release()
     cv.destroyAllWindows()
 
 def debuggingSave():
@@ -83,5 +101,5 @@ def debuggingSave():
 
 
 if __name__ == '__main__':
-    testModel()
+    testModel('./normalTrim.mp4')
     # debuggingSave()
