@@ -32,12 +32,30 @@ def checkEndRep2(angles: list) -> bool:
 
     return shoulderToHip and hipToKnee and kneeToAnkle
 
-def writeRepsToScreen(img: cv.typing.MatLike, reps: int):
+def writeRepsToScreen(img: cv.typing.MatLike, reps: int) -> cv.typing.MatLike:
     text = str(reps)
     h, w = img.shape[:2]
     (text_width, text_height), baseline = cv.getTextSize(text, cv.FONT_HERSHEY_SIMPLEX, 5, 3)
     x = w - text_width - 500
     y = text_height + 5
     img = cv.putText(img, text, (0, y), cv.FONT_HERSHEY_SIMPLEX, 5, (0, 0, 255), 3)
+
+    return img
+
+def writeDataToScreen(img: cv.typing.MatLike, reps: int, fps: float, latency: float) -> cv.typing.MatLike:
+    y = 0
+    dataDict = {
+        'Reps': reps,
+        'FPS': round(fps),
+        "Latency": latency
+    }
+
+    for label, num in dataDict.items():
+        t = f'{label}: {num:.2f}' if isinstance(num, float) else f'{label}: {num}'
+        t += 'ms' if label == 'Latency' else ''
+        info = cv.getTextSize(t, cv.FONT_HERSHEY_SIMPLEX, 0.75, 1)
+        yOffset = info[0][1]
+        y += yOffset + 5
+        img = cv.putText(img, t, (0, y), cv.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 1)
 
     return img
