@@ -1,4 +1,5 @@
 import cv2 as cv
+from angleHolder import AngleHolder
 
 def checkStartRep(angles: list) -> bool:
     shoulderToElbow = angles[0] > -84 and angles[0] < -75
@@ -9,10 +10,10 @@ def checkStartRep(angles: list) -> bool:
 
     return shoulderToElbow and elbowToWrist and shoulderToHip and hipToKnee and kneeToAnkle
 
-def checkStartRep2(angles: list) -> bool:
-    shoulderToHip = angles[0] > -25 and angles[0] < -13
-    hipToKnee = angles[1] > -30 and angles[1] < -20
-    kneeToAnkle = angles[2] > -20 and angles[2] < -5
+def checkStartRep2(angleHolder: AngleHolder) -> bool:
+    shoulderToHip = angleHolder.getShoulderToHip() > -25 and angleHolder.getShoulderToHip() < -13
+    hipToKnee = angleHolder.getHipToKnee() > -30 and angleHolder.getHipToKnee() < -20
+    kneeToAnkle = angleHolder.getKneeToAnkle() > -20 and angleHolder.getKneeToAnkle() < -5
 
     return shoulderToHip and hipToKnee and kneeToAnkle
 
@@ -25,10 +26,10 @@ def checkEndRep(angles: list) -> bool:
 
     return shoulderToElbow and elbowToWrist and shoulderToHip and hipToKnee and kneeToAnkle
 
-def checkEndRep2(angles: list) -> bool:
-    shoulderToHip = angles[0] > -5 and angles[0] < 10
-    hipToKnee = angles[1] > -15 and angles[1] < -5
-    kneeToAnkle = angles[2] > 0 and angles[2] < 15
+def checkEndRep2(angleHolder: AngleHolder) -> bool:
+    shoulderToHip = angleHolder.getShoulderToHip() > -5 and angleHolder.getShoulderToHip() < 10
+    hipToKnee = angleHolder.getHipToKnee() > -15 and angleHolder.getHipToKnee() < -5
+    kneeToAnkle = angleHolder.getKneeToAnkle() > 0 and angleHolder.getKneeToAnkle() < 15
 
     return shoulderToHip and hipToKnee and kneeToAnkle
 

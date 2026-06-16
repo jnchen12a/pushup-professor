@@ -1,11 +1,12 @@
 import numpy as np
 import cv2 as cv
 from ultralytics import YOLO
-from pose_utils import combineLeftRight, writeAnglesToScreen, calcAngles, calcAngles2
+from pose_utils import combineLeftRight, writeAnglesToScreen, calcAngles, calcAngles2, writeAnglesToScreen2
 from rep_counter import checkStartRep2, checkEndRep2, writeRepsToScreen, writeDataToScreen
 import math, time
+from angleHolder import AngleHolder
 
-# next: do smoothing
+# next: testing
 
 def testModel(path = ''):
     model = YOLO("yolov8n-pose.pt", verbose=False)
@@ -103,6 +104,7 @@ def finalModel():
     up = False
     numReps = 0
     prev = time.time()
+    aglHolder = AngleHolder()
 
     while True:
         ret, frame = cap.read()
@@ -126,18 +128,19 @@ def finalModel():
             cv.circle(img, (p[0], p[1]), 5, (0, 0, 255), -1)
         
         angles = calcAngles2(points)
+        aglHolder.addAll(*angles)
         
         if not up and not down:
             # start of rep
-            if checkStartRep2(angles):
+            if checkStartRep2(aglHolder):
                 down = True
         elif down and not up:
             # check at the bottom of rep
-            if checkEndRep2(angles):
+            if checkEndRep2(aglHolder):
                 down = False
                 up = True
         elif up and not down:
-            if checkStartRep2(angles):
+            if checkStartRep2(aglHolder):
                 up = False
                 down = False
                 numReps += 1
@@ -147,8 +150,8 @@ def finalModel():
         fps = 1 / (curr - prev)
         prev = curr
 
-        img = writeDataToScreen(img, numReps, fps, inferenceLatency)
-        # img = writeAnglesToScreen2(img, angles)
+        # img = writeDataToScreen(img, numReps, fps, inferenceLatency)
+        img = writeAnglesToScreen2(img, aglHolder)
 
         cv.imshow('frame', img)
         if cv.waitKey(1) & 0xFF == ord("q"):

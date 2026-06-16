@@ -1,5 +1,6 @@
 import math
 import cv2 as cv
+from angleHolder import AngleHolder
 
 def combineLeftRight(l: list) -> list:
     '''
@@ -49,7 +50,7 @@ def calcAngles(points: list) -> list:
 
     return ret
 
-def calcAngles2(points: list) -> list:
+def calcAngles2(points: list) -> list[float]:
     pairsOfInterest = [ [0, 3], [3, 4], [4, 5] ]
     ret = []
     for pair in pairsOfInterest:
@@ -78,7 +79,7 @@ def writeAnglesToScreen(img: cv.typing.MatLike, angles: list) -> cv.typing.MatLi
 
     return img
 
-def writeAnglesToScreen2(img: cv.typing.MatLike, angles: list) -> cv.typing.MatLike:
+def writeAnglesToScreen2(img: cv.typing.MatLike, angleHolder: AngleHolder) -> cv.typing.MatLike:
     pairs = [
         "sh to hip",
         "hip to kn",
@@ -86,7 +87,7 @@ def writeAnglesToScreen2(img: cv.typing.MatLike, angles: list) -> cv.typing.MatL
     ]
     yCoord = 0
     for i, name in enumerate(pairs):
-        t = f'{name}: {angles[i]:.2f}'
+        t = f'{name}: {angleHolder[i]:.2f}'
         info = cv.getTextSize(t, cv.FONT_HERSHEY_SIMPLEX, 1.5, 2)
         yOffset = info[0][1]
         yCoord += yOffset + 5
