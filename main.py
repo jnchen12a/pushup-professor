@@ -3,10 +3,13 @@ import cv2 as cv
 from ultralytics import YOLO
 from pose_utils import combineLeftRight, writeAnglesToScreen, calcAngles, calcAngles2, writeAnglesToScreen2
 from rep_counter import checkStartRep2, checkEndRep2, writeRepsToScreen, writeDataToScreen
-import math, time
+import math, time, os
 from angleHolder import AngleHolder
+from collections import deque
 
-# next: testing
+# next: skipping inference every other frame
+
+latencies = deque(maxlen=100)
 
 def testModel(path = ''):
     model = YOLO("yolov8n-pose.pt", verbose=False)
@@ -92,6 +95,22 @@ def debuggingSave():
     out.release()
     cv.destroyAllWindows()
 
+def printFPSStats(capture: float, inference: float, angles: float, smooth: float, count: float) -> None:
+    print(f'Capture: {capture:.2f} ms')
+    print(f'Inference: {inference:.2f} ms')
+    print(f'Angles: {angles:.2f} ms')
+    print(f'Smooth: {smooth:.2f} ms')
+    print(f'Count: {count:.2f} ms')
+    s = capture + inference + angles + smooth + count
+    print()
+    print(f'FPS: {1 / (s / 1000)}')
+    print()
+    print('Latency (last 100 frames)')
+    print(f'Current: {s:.2f} ms')
+    latencies.append(s)
+    print(f'Average: {np.mean(latencies):.2f} ms')
+    print(f'Std Dev: {np.std(latencies):.2f} ms')
+
 def finalModel():
     # only uses webcam
     cap = cv.VideoCapture(0)
@@ -103,21 +122,21 @@ def finalModel():
     down = False
     up = False
     numReps = 0
-    prev = time.time()
     aglHolder = AngleHolder()
+    skip = False
 
     while True:
+        t0 = time.perf_counter()
         ret, frame = cap.read()
+        t1 = time.perf_counter()
 
         if not ret:
             print("Error: Failed to grab frame.")
             break
 
         # inference
-        inferenceStart = time.time()
         results = model(frame, verbose=False)
-        inferenceEnd = time.time()
-        inferenceLatency = (inferenceEnd - inferenceStart) * 1000
+        t2 = time.perf_counter()
         result = results[0]
         xy = result.keypoints.xy
         points = combineLeftRight(xy)
@@ -127,8 +146,11 @@ def finalModel():
         for p in points:
             cv.circle(img, (p[0], p[1]), 5, (0, 0, 255), -1)
         
+        t3 = time.perf_counter()
         angles = calcAngles2(points)
+        t4 = time.perf_counter()
         aglHolder.addAll(*angles)
+        t5 = time.perf_counter()
         
         if not up and not down:
             # start of rep
@@ -144,11 +166,17 @@ def finalModel():
                 up = False
                 down = False
                 numReps += 1
+        t6 = time.perf_counter()
         
         # fps calcs
-        curr = time.time()
-        fps = 1 / (curr - prev)
-        prev = curr
+        captureMs = (t1 - t0) * 1000
+        inferenceMs = (t2 - t1) * 1000
+        anglesMs = (t4 - t3) * 1000
+        smoothMs = (t5 - t4) * 1000
+        repCountMs = (t6 - t5) * 1000
+
+        os.system('cls')
+        printFPSStats(captureMs, inferenceMs, anglesMs, smoothMs, repCountMs)
 
         # img = writeDataToScreen(img, numReps, fps, inferenceLatency)
         img = writeAnglesToScreen2(img, aglHolder)
