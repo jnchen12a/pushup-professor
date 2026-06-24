@@ -17,7 +17,7 @@ Set up a Python venv and run `pip install -r requirements.txt`
 ## How to Run
 Run `py main.py` with the following options:
 * `--imgsz` --- sets the image size passed into the model for inference (default 640).
-* `--skip-frames` --- how many frames to skip in-between running inference. For example, `--skip-frames 0` runs inference on every frame, while `--skip-frames 1` runs inference every other frame.
+* `--skip-frames` --- how many frames to skip in-between running inference. For example, `--skip-frames 0` runs inference on every frame, while `--skip-frames 1` runs inference every other frame (default 0).
 * `--log` --- toggles on logging capabilities.
 
 ## Performance Results
