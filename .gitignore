@@ -4,3 +4,4 @@ __pycache__/
 vids/
 *.MOV
 *.txt
+*.bat

@@ -7,8 +7,9 @@ import math, time, os
 from angleHolder import AngleHolder
 from collections import deque
 from io import TextIOWrapper
+from argparse import ArgumentParser
 
-# next: documentation, graphs, demo (with skeleton), demo (get data), cli configs
+# next: documentation, graphs, demo (with skeleton), demo (get data)
 
 latencies = deque(maxlen=100)
 PROGRAM_START = time.perf_counter()
@@ -102,7 +103,7 @@ def initLoggingFile() -> None:
         file.write('Frame,Timestamp,Capture (ms),Inference (ms),Angles (ms),Smooth (ms),Count (ms),Current Latency (ms),Average Latency (ms),Std Dev Latency (ms),FPS\n')
         file.flush()
 
-def printFPSStats(frame: int, capture: float, inference: float, angles: float, smooth: float, count: float, file: TextIOWrapper) -> None:
+def printFPSStats(frame: int, capture: float, inference: float, angles: float, smooth: float, count: float) -> None:
     print(f'Capture: {capture:.2f} ms')
     print(f'Inference: {inference:.2f} ms')
     print(f'Angles: {angles:.2f} ms')
@@ -120,9 +121,13 @@ def printFPSStats(frame: int, capture: float, inference: float, angles: float, s
     print(f'Average: {avg:.2f} ms')
     print(f'Std Dev: {stdDev:.2f} ms')
 
+def logFPSStats(frame: int, capture: float, inference: float, angles: float, smooth: float, count: float, file: TextIOWrapper) -> None:
+    s = capture + inference + angles + smooth + count
+    avg = np.mean(latencies)
+    stdDev = np.std(latencies)
     file.write(f'{frame},{time.perf_counter() - PROGRAM_START},{capture:.2f},{inference:.2f},{angles:.2f},{smooth:.2f},{count:.2f},{s:.2f},{avg:.2f},{stdDev:.2f},{1 / (s / 1000)}\n')
 
-def finalModel(frameSkip: bool = False, skipCount: int = 1) -> None:
+def finalModel(imgsz: int, skipCount: int, log: bool) -> None:
     # only uses webcam
     cap = cv.VideoCapture(0)
     if not cap.isOpened():
@@ -130,8 +135,9 @@ def finalModel(frameSkip: bool = False, skipCount: int = 1) -> None:
         quit()
     model = YOLO("yolov8n-pose.pt", verbose=False)
 
-    initLoggingFile()
-    file = open('./log.txt', 'a')
+    if log:
+        initLoggingFile()
+        file = open('./log.txt', 'a')
 
     down = False
     up = False
@@ -151,10 +157,9 @@ def finalModel(frameSkip: bool = False, skipCount: int = 1) -> None:
 
         # inference
         runInference = (f % skipCount == 0)
-        if runInference and frameSkip:
-            results = model(frame, verbose=False)
-        elif not frameSkip:
-            results = model(frame, verbose=False)
+        if runInference:
+            results = model(frame, imgsz=imgsz, verbose=False)
+        
         t2 = time.perf_counter()
         result = results[0]
         xy = result.keypoints.xy
@@ -195,7 +200,9 @@ def finalModel(frameSkip: bool = False, skipCount: int = 1) -> None:
         repCountMs = (t6 - t5) * 1000
 
         os.system('cls')
-        printFPSStats(f, captureMs, inferenceMs, anglesMs, smoothMs, repCountMs, file)
+        printFPSStats(f, captureMs, inferenceMs, anglesMs, smoothMs, repCountMs)
+        if log:
+            logFPSStats(f, captureMs, inferenceMs, anglesMs, smoothMs, repCountMs, file)
 
         # img = writeDataToScreen(img, numReps, fps, inferenceLatency)
         img = writeAnglesToScreen2(img, aglHolder)
@@ -211,6 +218,12 @@ def finalModel(frameSkip: bool = False, skipCount: int = 1) -> None:
 
 
 if __name__ == '__main__':
+    parser = ArgumentParser()
+    parser.add_argument('--imgsz', help='Dimensions of image which model takes in.', type=int, default=640)
+    parser.add_argument('--skip-frames', help='Number of frames we skip each time before running inference.', type=int, default=0)
+    parser.add_argument('--log', help='Toggle logging.', action='store_true')
+
+    args = parser.parse_args()
     # testModel('./vids/normalTrim.mp4')
     # debuggingSave()
-    finalModel(frameSkip=True, skipCount=1)
+    finalModel(imgsz=args.imgsz, skipCount=args.skip_frames, log=args.log)
