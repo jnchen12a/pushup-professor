@@ -6,10 +6,12 @@ from rep_counter import checkStartRep2, checkEndRep2, writeRepsToScreen, writeDa
 import math, time, os
 from angleHolder import AngleHolder
 from collections import deque
+from io import TextIOWrapper
 
-# next: skipping inference every other frame
+# next: documentation, graphs, demo (with skeleton), demo (get data), cli configs
 
 latencies = deque(maxlen=100)
+PROGRAM_START = time.perf_counter()
 
 def testModel(path = ''):
     model = YOLO("yolov8n-pose.pt", verbose=False)
@@ -95,7 +97,12 @@ def debuggingSave():
     out.release()
     cv.destroyAllWindows()
 
-def printFPSStats(capture: float, inference: float, angles: float, smooth: float, count: float) -> None:
+def initLoggingFile() -> None:
+    with open('./log.txt', 'w') as file:
+        file.write('Frame,Timestamp,Capture (ms),Inference (ms),Angles (ms),Smooth (ms),Count (ms),Current Latency (ms),Average Latency (ms),Std Dev Latency (ms),FPS\n')
+        file.flush()
+
+def printFPSStats(frame: int, capture: float, inference: float, angles: float, smooth: float, count: float, file: TextIOWrapper) -> None:
     print(f'Capture: {capture:.2f} ms')
     print(f'Inference: {inference:.2f} ms')
     print(f'Angles: {angles:.2f} ms')
@@ -108,10 +115,14 @@ def printFPSStats(capture: float, inference: float, angles: float, smooth: float
     print('Latency (last 100 frames)')
     print(f'Current: {s:.2f} ms')
     latencies.append(s)
-    print(f'Average: {np.mean(latencies):.2f} ms')
-    print(f'Std Dev: {np.std(latencies):.2f} ms')
+    avg = np.mean(latencies)
+    stdDev = np.std(latencies)
+    print(f'Average: {avg:.2f} ms')
+    print(f'Std Dev: {stdDev:.2f} ms')
 
-def finalModel():
+    file.write(f'{frame},{time.perf_counter() - PROGRAM_START},{capture:.2f},{inference:.2f},{angles:.2f},{smooth:.2f},{count:.2f},{s:.2f},{avg:.2f},{stdDev:.2f},{1 / (s / 1000)}\n')
+
+def finalModel(frameSkip: bool = False, skipCount: int = 1) -> None:
     # only uses webcam
     cap = cv.VideoCapture(0)
     if not cap.isOpened():
@@ -119,11 +130,15 @@ def finalModel():
         quit()
     model = YOLO("yolov8n-pose.pt", verbose=False)
 
+    initLoggingFile()
+    file = open('./log.txt', 'a')
+
     down = False
     up = False
     numReps = 0
     aglHolder = AngleHolder()
-    skip = False
+    f = 0
+    skipCount += 1 # so that we actually skip skipCount frames before running inference again
 
     while True:
         t0 = time.perf_counter()
@@ -135,7 +150,11 @@ def finalModel():
             break
 
         # inference
-        results = model(frame, verbose=False)
+        runInference = (f % skipCount == 0)
+        if runInference and frameSkip:
+            results = model(frame, verbose=False)
+        elif not frameSkip:
+            results = model(frame, verbose=False)
         t2 = time.perf_counter()
         result = results[0]
         xy = result.keypoints.xy
@@ -176,7 +195,7 @@ def finalModel():
         repCountMs = (t6 - t5) * 1000
 
         os.system('cls')
-        printFPSStats(captureMs, inferenceMs, anglesMs, smoothMs, repCountMs)
+        printFPSStats(f, captureMs, inferenceMs, anglesMs, smoothMs, repCountMs, file)
 
         # img = writeDataToScreen(img, numReps, fps, inferenceLatency)
         img = writeAnglesToScreen2(img, aglHolder)
@@ -185,10 +204,13 @@ def finalModel():
         if cv.waitKey(1) & 0xFF == ord("q"):
             break
 
+        f += 1
+
     cv.destroyAllWindows()
+    file.close()
 
 
 if __name__ == '__main__':
     # testModel('./vids/normalTrim.mp4')
     # debuggingSave()
-    finalModel()
+    finalModel(frameSkip=True, skipCount=1)
