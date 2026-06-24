@@ -206,6 +206,7 @@ def finalModel(imgsz: int, skipCount: int, log: bool) -> None:
 
         # img = writeDataToScreen(img, numReps, fps, inferenceLatency)
         img = writeAnglesToScreen2(img, aglHolder)
+        # img = writeRepsToScreen(img, numReps)
 
         cv.imshow('frame', img)
         if cv.waitKey(1) & 0xFF == ord("q"):
