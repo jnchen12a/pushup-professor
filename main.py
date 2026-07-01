@@ -215,7 +215,8 @@ def finalModel(imgsz: int, skipCount: int, log: bool) -> None:
         f += 1
 
     cv.destroyAllWindows()
-    file.close()
+    if log:
+        file.close()
 
 
 if __name__ == '__main__':
