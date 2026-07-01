@@ -32,6 +32,27 @@ def calcAvgInfLatency():
 
         print(f'{csv}: {last100['Inference (ms)'].mean()}')
 
+def generateReadmeGraphs():
+    baseline = pd.read_csv(csvList[0])
+    optimized = pd.read_csv(csvList[-1])
+
+    plt.figure(figsize=(10, 5))
+    l1, = plt.plot(baseline["Frame"], baseline["Average Latency (ms)"], color='blue', label='baseline')
+    l2, = plt.plot(optimized["Frame"], optimized["Average Latency (ms)"], color='orange', label='optimized')
+    #l1.set_label('baseline')
+    #l2.set_label('optimized')
+    plt.title("Average Latency per Frame")
+    plt.xlabel("Frame")
+    plt.ylabel("Average Latency (ms)")
+    plt.grid(True)
+    plt.ylim(0, 400)
+    plt.legend()
+
+    # Save graph
+    plt.savefig('./imgs/compAvgLatency.png', dpi=300, bbox_inches="tight")
+
+    plt.show()
+
 
 if __name__ == '__main__':
-    calcAvgInfLatency()
+    generateReadmeGraphs()

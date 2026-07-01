@@ -14,13 +14,13 @@ Applying input resolution scaling together with configurable inference skipping 
 ![Pipeline Diagram](./imgs/pipeline.png)
 
 ### Core Features
-Computer Vision
+#### Computer Vision
 * Real-time webcam inference
 * YOLOv8 Pose estimation
 * Joint-angle based push-up detection
 * Rolling-average temporal smoothing
 
-Performance Engineering
+#### Performance Engineering
 * Per-stage latency profiling
 * Configurable inference resolution
 * Configurable frame skipping
@@ -60,14 +60,8 @@ In order to quantify how much each improvement benefited performance, the code w
 Note: Metrics are computed over the last 100 frames to exclude one-time initialization overhead (e.g., model loading and camera warm-up) and better represent steady-state performance.
 
 ### Performance Evaluation
-#### Baseline model, average pipeline latency (over last 100 frames) vs frame
-![Graph of average latency vs frame for baseline model](./imgs/avg_latency_vs_frame_baseline.png)
-#### Optimized model, average pipeline latency (over last 100 frames) vs frame
-![Graph of average latency vs frame for highest performing model](./imgs/avg_latency_vs_frame_skip_size_5.png)
-#### Baseline inference latency, inference latency vs frame
-![Graph of inference latency vs frame for baseline model](./imgs/inf_latency_vs_frame_baseline.png)
-#### Optimized model, inference latency vs frame
-![Graph of inference latency vs frame for highest performing model](./imgs/inf_latency_vs_frame_skip_size_5.png)
+![Graph comparing average latency vs frame](./imgs/compAvgLatency.png)
+![Graph comparing inference latency vs frame](./imgs/compInfLatency.png)
 
 ## Findings
 * Inference accounted for approximately 90% of total pipeline execution time, making it the dominant performance bottleneck.
